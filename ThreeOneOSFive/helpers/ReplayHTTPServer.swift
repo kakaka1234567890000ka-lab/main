@@ -323,7 +323,17 @@ class ReplayHTTPServer: ObservableObject {
                         try fileManager.removeItem(at: destJsonFile)
                         log("Transfer: Removed existing JSON")
                     }
-                    try modifiedJsonData.write(to: destJsonFile)
+                    
+                    // Write with data protection and force sync
+                    try modifiedJsonData.write(to: destJsonFile, options: [.atomic, .completeFileProtection])
+                    
+                    // Force sync to disk
+                    if let fileHandle = FileHandle(forWritingAtPath: destJsonFile.path) {
+                        fileHandle.synchronizeFile()
+                        fileHandle.closeFile()
+                        log("Transfer: Forced sync to disk")
+                    }
+                    
                     log("Transfer: ✅ Written modified JSON: \(jsonFile.lastPathComponent)")
                     
                     // Verify write
@@ -343,6 +353,14 @@ class ReplayHTTPServer: ObservableObject {
                         log("Transfer: Removed existing BIN")
                     }
                     try fileManager.copyItem(at: binFile, to: destBinFile)
+                    
+                    // Force sync to disk
+                    if let fileHandle = FileHandle(forWritingAtPath: destBinFile.path) {
+                        fileHandle.synchronizeFile()
+                        fileHandle.closeFile()
+                        log("Transfer: Forced BIN sync to disk")
+                    }
+                    
                     log("Transfer: ✅ Copied .bin: \(binFile.lastPathComponent)")
                     
                     // Verify copy
