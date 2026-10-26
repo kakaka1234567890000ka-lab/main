@@ -315,21 +315,43 @@ class ReplayHTTPServer: ObservableObject {
                     
                     // Write modified JSON to destination
                     let destJsonFile = destPath.appendingPathComponent(jsonFile.lastPathComponent)
+                    log("Transfer: Dest JSON path: \(destJsonFile.path)")
+                    
                     let modifiedJsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted, .sortedKeys])
                     
                     if fileManager.fileExists(atPath: destJsonFile.path) {
                         try fileManager.removeItem(at: destJsonFile)
+                        log("Transfer: Removed existing JSON")
                     }
                     try modifiedJsonData.write(to: destJsonFile)
                     log("Transfer: ✅ Written modified JSON: \(jsonFile.lastPathComponent)")
                     
+                    // Verify write
+                    if fileManager.fileExists(atPath: destJsonFile.path) {
+                        let fileSize = try? fileManager.attributesOfItem(atPath: destJsonFile.path)[.size] as? Int64 ?? 0
+                        log("Transfer: Verified JSON exists, size: \(fileSize ?? 0) bytes")
+                    } else {
+                        log("Transfer: ⚠️ WARNING: JSON not found after write!")
+                    }
+                    
                     // Copy .bin file
                     let destBinFile = destPath.appendingPathComponent(binFile.lastPathComponent)
+                    log("Transfer: Dest BIN path: \(destBinFile.path)")
+                    
                     if fileManager.fileExists(atPath: destBinFile.path) {
                         try fileManager.removeItem(at: destBinFile)
+                        log("Transfer: Removed existing BIN")
                     }
                     try fileManager.copyItem(at: binFile, to: destBinFile)
                     log("Transfer: ✅ Copied .bin: \(binFile.lastPathComponent)")
+                    
+                    // Verify copy
+                    if fileManager.fileExists(atPath: destBinFile.path) {
+                        let fileSize = try? fileManager.attributesOfItem(atPath: destBinFile.path)[.size] as? Int64 ?? 0
+                        log("Transfer: Verified BIN exists, size: \(fileSize ?? 0) bytes")
+                    } else {
+                        log("Transfer: ⚠️ WARNING: BIN not found after copy!")
+                    }
                     
                     transferred += 1
                     
@@ -341,6 +363,18 @@ class ReplayHTTPServer: ObservableObject {
             }
             
             log("Transfer: Completed - transferred \(transferred)/\(jsonFiles.count) replays")
+            
+            // List what's actually in destination folder
+            do {
+                let finalFiles = try fileManager.contentsOfDirectory(at: destPath, includingPropertiesForKeys: nil)
+                log("Transfer: Final check - \(finalFiles.count) files in destination:")
+                for file in finalFiles {
+                    let fileSize = try? fileManager.attributesOfItem(atPath: file.path)[.size] as? Int64 ?? 0
+                    log("Transfer:   - \(file.lastPathComponent) (\(fileSize ?? 0) bytes)")
+                }
+            } catch {
+                log("Transfer: Could not list destination folder - \(error)")
+            }
             
             if transferred == 0 {
                 return ["success": false, "message": "Erro ao transferir replays: \(errors.joined(separator: ", "))"]
