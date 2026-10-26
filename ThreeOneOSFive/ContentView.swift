@@ -127,7 +127,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .new:
-            RepositoryMarketplaceView(
+            PatchProjectsView(
                 onOpenSettings: openSettings,
                 onOpenLogs: openLogs
             )
@@ -148,7 +148,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .search:
-            RepositoryMarketplaceView(
+            PatchProjectsView(
                 onOpenSettings: openSettings,
                 onOpenLogs: openLogs
             )
