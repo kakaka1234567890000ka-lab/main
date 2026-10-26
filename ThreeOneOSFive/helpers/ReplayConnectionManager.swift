@@ -53,8 +53,8 @@ class ReplayConnectionManager: ObservableObject {
             self.isConnecting = true
         }
         
-        // Register device with Python server
-        guard let url = URL(string: "http://\(ip):\(port)/api/device/register") else {
+        // Register device with server
+        guard let url = URL(string: "http://\(ip):\(port)?action=device_register") else {
             DispatchQueue.main.async {
                 self.isConnecting = false
                 completion(false, "Invalid server URL")
@@ -84,7 +84,7 @@ class ReplayConnectionManager: ObservableObject {
         request.httpBody = jsonData
         request.timeoutInterval = 10
         
-        log("ReplayConnection: Registering with Python server at \(ip):\(port)")
+        log("ReplayConnection: Registering with server at \(ip):\(port)")
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
@@ -98,7 +98,7 @@ class ReplayConnectionManager: ObservableObject {
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                    log("ReplayConnection: Successfully registered with Python server")
+                    log("ReplayConnection: Successfully registered with server")
                     self?.isConnected = true
                     completion(true, "Connected to server!")
                     
@@ -303,7 +303,7 @@ class ReplayConnectionManager: ObservableObject {
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self = self, self.isConnected else { return }
             
-            guard let url = URL(string: "http://\(self.serverIP):\(self.serverPort)/api/device/heartbeat") else { return }
+            guard let url = URL(string: "http://\(self.serverIP):\(self.serverPort)?action=device_heartbeat") else { return }
             
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
