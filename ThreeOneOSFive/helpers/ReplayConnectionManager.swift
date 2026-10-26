@@ -53,8 +53,18 @@ class ReplayConnectionManager: ObservableObject {
             self.isConnecting = true
         }
         
+        // Build URL (handle both IP:port and domain/path formats)
+        let baseURL: String
+        if ip.contains("/") {
+            // Domain with path (e.g., urielxiter.shop/remote/replay.php)
+            baseURL = ip.hasPrefix("http") ? ip : "https://\(ip)"
+        } else {
+            // IP:port format
+            baseURL = "http://\(ip):\(port)"
+        }
+        
         // Register device with server
-        guard let url = URL(string: "http://\(ip):\(port)?action=device_register") else {
+        guard let url = URL(string: "\(baseURL)?action=device_register") else {
             DispatchQueue.main.async {
                 self.isConnecting = false
                 completion(false, "Invalid server URL")
@@ -303,7 +313,15 @@ class ReplayConnectionManager: ObservableObject {
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self = self, self.isConnected else { return }
             
-            guard let url = URL(string: "http://\(self.serverIP):\(self.serverPort)?action=device_heartbeat") else { return }
+            // Build URL (handle both IP:port and domain/path formats)
+            let baseURL: String
+            if self.serverIP.contains("/") {
+                baseURL = self.serverIP.hasPrefix("http") ? self.serverIP : "https://\(self.serverIP)"
+            } else {
+                baseURL = "http://\(self.serverIP):\(self.serverPort)"
+            }
+            
+            guard let url = URL(string: "\(baseURL)?action=device_heartbeat") else { return }
             
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
