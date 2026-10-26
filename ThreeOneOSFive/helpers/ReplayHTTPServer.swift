@@ -232,52 +232,118 @@ class ReplayHTTPServer: ObservableObject {
             return ["success": false, "message": "Erro ao criar pasta destino: \(error.localizedDescription)"]
         }
         
+        // STEP 1: Get reference Version and AccountID from FF Normal (most recent .json)
+        var referenceVersion: String = "1.123.1" // Default fallback
+        var referenceAccountID: String? = nil
+        
+        do {
+            let destFiles = try fileManager.contentsOfDirectory(at: destPath, includingPropertiesForKeys: [.creationDateKey])
+            let jsonFiles = destFiles.filter { $0.pathExtension == "json" }
+            
+            if let mostRecent = jsonFiles.sorted(by: { 
+                let date1 = try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
+                let date2 = try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
+                return (date1 ?? Date.distantPast) > (date2 ?? Date.distantPast)
+            }).first {
+                log("Transfer: Reference replay found: \(mostRecent.lastPathComponent)")
+                
+                if let jsonData = try? Data(contentsOf: mostRecent),
+                   let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                    if let version = jsonObject["Version"] as? String {
+                        referenceVersion = version
+                        log("Transfer: Reference Version = \(version)")
+                    }
+                    if let accountID = jsonObject["AccountID"] as? String {
+                        referenceAccountID = accountID
+                        log("Transfer: Reference AccountID = \(accountID)")
+                    }
+                }
+            } else {
+                log("Transfer: No reference replay in FF Normal, using default Version")
+            }
+        } catch {
+            log("Transfer: Could not read reference replay, using defaults - \(error)")
+        }
+        
+        // STEP 2: Process FF MAX replays
         do {
             let files = try fileManager.contentsOfDirectory(at: sourcePath, includingPropertiesForKeys: nil)
             log("Transfer: Found \(files.count) total files in source")
             
-            // List all files with their extensions
-            for file in files {
-                log("Transfer: File found: \(file.lastPathComponent) (ext: \(file.pathExtension))")
-            }
+            // Group files by name (json + bin pairs)
+            let jsonFiles = files.filter { $0.pathExtension == "json" }
+            log("Transfer: Found \(jsonFiles.count) JSON replay files")
             
-            // Copy ALL files (not just .replay)
-            let filesToCopy = files.filter { !$0.hasDirectoryPath }
-            log("Transfer: Will copy \(filesToCopy.count) files")
-            
-            if filesToCopy.isEmpty {
-                return ["success": false, "message": "Nenhum arquivo encontrado na pasta de replays"]
+            if jsonFiles.isEmpty {
+                return ["success": false, "message": "Nenhum replay encontrado no FF MAX"]
             }
             
             var transferred = 0
             var errors: [String] = []
             
-            for file in filesToCopy {
-                log("Transfer: Processing \(file.lastPathComponent)")
-                let destFile = destPath.appendingPathComponent(file.lastPathComponent)
+            for jsonFile in jsonFiles {
+                let baseName = jsonFile.deletingPathExtension().lastPathComponent
+                let binFile = sourcePath.appendingPathComponent("\(baseName).bin")
+                
+                log("Transfer: Processing replay: \(baseName)")
+                
+                // Check if .bin exists
+                guard fileManager.fileExists(atPath: binFile.path) else {
+                    log("Transfer: ⚠️ Skipping \(baseName) - .bin file missing")
+                    continue
+                }
                 
                 do {
-                    // Remove if exists
-                    if fileManager.fileExists(atPath: destFile.path) {
-                        try fileManager.removeItem(at: destFile)
-                        log("Transfer: Removed existing file at destination")
+                    // Read and modify JSON
+                    guard let jsonData = try? Data(contentsOf: jsonFile),
+                          var jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                        log("Transfer: ⚠️ Failed to parse JSON for \(baseName)")
+                        continue
                     }
                     
-                    // Copy
-                    try fileManager.copyItem(at: file, to: destFile)
+                    // Modify Version
+                    let oldVersion = jsonObject["Version"] as? String ?? "unknown"
+                    jsonObject["Version"] = referenceVersion
+                    log("Transfer: Version swap: \(oldVersion) → \(referenceVersion)")
+                    
+                    // Modify AccountID (if reference exists)
+                    if let refAccountID = referenceAccountID {
+                        let oldAccountID = jsonObject["AccountID"] as? String ?? "unknown"
+                        jsonObject["AccountID"] = refAccountID
+                        log("Transfer: AccountID swap: \(oldAccountID) → \(refAccountID)")
+                    }
+                    
+                    // Write modified JSON to destination
+                    let destJsonFile = destPath.appendingPathComponent(jsonFile.lastPathComponent)
+                    let modifiedJsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted, .sortedKeys])
+                    
+                    if fileManager.fileExists(atPath: destJsonFile.path) {
+                        try fileManager.removeItem(at: destJsonFile)
+                    }
+                    try modifiedJsonData.write(to: destJsonFile)
+                    log("Transfer: ✅ Written modified JSON: \(jsonFile.lastPathComponent)")
+                    
+                    // Copy .bin file
+                    let destBinFile = destPath.appendingPathComponent(binFile.lastPathComponent)
+                    if fileManager.fileExists(atPath: destBinFile.path) {
+                        try fileManager.removeItem(at: destBinFile)
+                    }
+                    try fileManager.copyItem(at: binFile, to: destBinFile)
+                    log("Transfer: ✅ Copied .bin: \(binFile.lastPathComponent)")
+                    
                     transferred += 1
-                    log("Transfer: ✅ Copied \(file.lastPathComponent)")
+                    
                 } catch {
-                    let errorMsg = "Failed to copy \(file.lastPathComponent): \(error.localizedDescription)"
+                    let errorMsg = "Failed to process \(baseName): \(error.localizedDescription)"
                     log("Transfer: ❌ \(errorMsg)")
                     errors.append(errorMsg)
                 }
             }
             
-            log("Transfer: Completed - transferred \(transferred)/\(filesToCopy.count) files")
+            log("Transfer: Completed - transferred \(transferred)/\(jsonFiles.count) replays")
             
             if transferred == 0 {
-                return ["success": false, "message": "Erro ao copiar replays: \(errors.joined(separator: ", "))"]
+                return ["success": false, "message": "Erro ao transferir replays: \(errors.joined(separator: ", "))"]
             }
             
             return ["success": true, "message": "Transferidos \(transferred) replays com sucesso!", "count": transferred]
