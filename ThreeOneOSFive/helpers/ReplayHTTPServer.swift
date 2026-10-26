@@ -187,40 +187,97 @@ class ReplayHTTPServer: ObservableObject {
     }
     
     private func transferReplays() -> [String: Any] {
+        log("Transfer: Starting replay transfer")
+        
         // Get FF MAX container
         var maxError: NSString?
         guard let ffMaxPath = MCMActivateContainerPath(2, "com.dts.freefiremax", false, &maxError) else {
-            return ["success": false, "message": "Free Fire MAX not found"]
+            let error = maxError.map { String($0) } ?? "unknown error"
+            log("Transfer: FF MAX not found - \(error)")
+            return ["success": false, "message": "Free Fire MAX não encontrado"]
         }
+        log("Transfer: FF MAX path: \(ffMaxPath)")
         
         // Get FF Normal container
         var normalError: NSString?
         guard let ffNormalPath = MCMActivateContainerPath(2, "com.dts.freefireth", false, &normalError) else {
-            return ["success": false, "message": "Free Fire Normal not found"]
+            let error = normalError.map { String($0) } ?? "unknown error"
+            log("Transfer: FF Normal not found - \(error)")
+            return ["success": false, "message": "Free Fire Normal não encontrado"]
         }
+        log("Transfer: FF Normal path: \(ffNormalPath)")
         
         let sourcePath = URL(fileURLWithPath: ffMaxPath).appendingPathComponent("Documents/MReplays")
         let destPath = URL(fileURLWithPath: ffNormalPath).appendingPathComponent("Documents/MReplays")
         
+        log("Transfer: Source path: \(sourcePath.path)")
+        log("Transfer: Dest path: \(destPath.path)")
+        
         let fileManager = FileManager.default
         
+        // Check if source exists
+        var isDir: ObjCBool = false
+        if !fileManager.fileExists(atPath: sourcePath.path, isDirectory: &isDir) {
+            log("Transfer: Source directory does not exist")
+            return ["success": false, "message": "Pasta de replays do FF MAX não existe"]
+        }
+        log("Transfer: Source exists, isDirectory: \(isDir.boolValue)")
+        
         // Create destination directory if it doesn't exist
-        try? fileManager.createDirectory(at: destPath, withIntermediateDirectories: true)
+        do {
+            try fileManager.createDirectory(at: destPath, withIntermediateDirectories: true)
+            log("Transfer: Destination directory created/verified")
+        } catch {
+            log("Transfer: Failed to create dest directory - \(error)")
+            return ["success": false, "message": "Erro ao criar pasta destino: \(error.localizedDescription)"]
+        }
         
         do {
             let files = try fileManager.contentsOfDirectory(at: sourcePath, includingPropertiesForKeys: nil)
-            var transferred = 0
+            log("Transfer: Found \(files.count) total files in source")
             
-            for file in files where file.pathExtension == "replay" {
-                let destFile = destPath.appendingPathComponent(file.lastPathComponent)
-                try? fileManager.removeItem(at: destFile) // Remove if exists
-                try fileManager.copyItem(at: file, to: destFile)
-                transferred += 1
+            let replayFiles = files.filter { $0.pathExtension.lowercased() == "replay" }
+            log("Transfer: Found \(replayFiles.count) .replay files")
+            
+            if replayFiles.isEmpty {
+                return ["success": false, "message": "Nenhum replay encontrado no FF MAX"]
             }
             
-            return ["success": true, "message": "Transferred \(transferred) replays", "count": transferred]
+            var transferred = 0
+            var errors: [String] = []
+            
+            for file in replayFiles {
+                log("Transfer: Processing \(file.lastPathComponent)")
+                let destFile = destPath.appendingPathComponent(file.lastPathComponent)
+                
+                do {
+                    // Remove if exists
+                    if fileManager.fileExists(atPath: destFile.path) {
+                        try fileManager.removeItem(at: destFile)
+                        log("Transfer: Removed existing file at destination")
+                    }
+                    
+                    // Copy
+                    try fileManager.copyItem(at: file, to: destFile)
+                    transferred += 1
+                    log("Transfer: ✅ Copied \(file.lastPathComponent)")
+                } catch {
+                    let errorMsg = "Failed to copy \(file.lastPathComponent): \(error.localizedDescription)"
+                    log("Transfer: ❌ \(errorMsg)")
+                    errors.append(errorMsg)
+                }
+            }
+            
+            log("Transfer: Completed - transferred \(transferred)/\(replayFiles.count) files")
+            
+            if transferred == 0 {
+                return ["success": false, "message": "Erro ao copiar replays: \(errors.joined(separator: ", "))"]
+            }
+            
+            return ["success": true, "message": "Transferidos \(transferred) replays com sucesso!", "count": transferred]
         } catch {
-            return ["success": false, "message": "Error: \(error.localizedDescription)"]
+            log("Transfer: Error listing files - \(error)")
+            return ["success": false, "message": "Erro ao listar replays: \(error.localizedDescription)"]
         }
     }
     
