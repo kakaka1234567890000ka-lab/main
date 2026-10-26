@@ -150,7 +150,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .replay:
-            ReplayTransferView()
+            ReplayConnectionView()
         }
     }
 

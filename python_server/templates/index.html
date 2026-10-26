@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URIEL XITER - REPLAY CONTROL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="scan-line"></div>
+    
+    <div class="container" id="loginContainer">
+        <div class="header">
+            <div class="glitch">URIEL XITER</div>
+            <div class="team-name">REPLAY CONTROL CENTER</div>
+        </div>
+        <p class="subtitle">SISTEMA DE CONTROLE REMOTO</p>
+        
+        <div class="input-group">
+            <label for="key">AUTHENTICATION KEY</label>
+            <div class="input-wrapper">
+                <input type="text" id="key" placeholder="INSIRA SUA KEY" autocapitalize="characters">
+            </div>
+        </div>
+        
+        <button onclick="login()" id="loginBtn">BYPASS</button>
+        
+        <p class="footer-note">Acesso restrito - Key obrigatória</p>
+        
+        <div id="loginMessage"></div>
+    </div>
+    
+    <div class="container dashboard hidden" id="dashboard">
+        <div class="header">
+            <div class="glitch">URIEL XITER</div>
+            <div class="team-name">REPLAY CONTROL CENTER</div>
+        </div>
+        <div class="welcome">ACESSO CONCEDIDO</div>
+        
+        <div class="section">
+            <div class="section-title">DISPOSITIVOS CONECTADOS</div>
+            <div id="devicesList" class="devices-list">
+                <div class="no-devices">Nenhum dispositivo conectado</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">CONTROLE DE TRANSFERÊNCIA</div>
+            <div id="selectedDevice" class="selected-device">
+                Selecione um dispositivo acima
+            </div>
+            <button onclick="transferReplays()" id="transferBtn" disabled>
+                INICIAR TRANSFERÊNCIA
+            </button>
+        </div>
+        
+        <div id="transferMessage"></div>
+        
+        <div class="footer-actions">
+            <button onclick="refreshDevices()" class="secondary-btn">
+                ATUALIZAR DISPOSITIVOS
+            </button>
+            <button onclick="logout()" class="secondary-btn">
+                DESCONECTAR
+            </button>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
