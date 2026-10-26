@@ -232,9 +232,8 @@ class ReplayHTTPServer: ObservableObject {
             return ["success": false, "message": "Erro ao criar pasta destino: \(error.localizedDescription)"]
         }
         
-        // STEP 1: Get reference Version and AccountID from FF Normal (most recent .json)
+        // STEP 1: Get reference Version from FF Normal (most recent .json)
         var referenceVersion: String = "1.123.1" // Default fallback
-        var referenceAccountID: String? = nil
         
         do {
             let destFiles = try fileManager.contentsOfDirectory(at: destPath, includingPropertiesForKeys: [.creationDateKey])
@@ -252,10 +251,6 @@ class ReplayHTTPServer: ObservableObject {
                     if let version = jsonObject["Version"] as? String {
                         referenceVersion = version
                         log("Transfer: Reference Version = \(version)")
-                    }
-                    if let accountID = jsonObject["AccountID"] as? String {
-                        referenceAccountID = accountID
-                        log("Transfer: Reference AccountID = \(accountID)")
                     }
                 }
             } else {
@@ -301,17 +296,10 @@ class ReplayHTTPServer: ObservableObject {
                         continue
                     }
                     
-                    // Modify Version
+                    // Modify Version (AccountID stays the same - same account in both apps)
                     let oldVersion = jsonObject["Version"] as? String ?? "unknown"
                     jsonObject["Version"] = referenceVersion
                     log("Transfer: Version swap: \(oldVersion) → \(referenceVersion)")
-                    
-                    // Modify AccountID (if reference exists)
-                    if let refAccountID = referenceAccountID {
-                        let oldAccountID = jsonObject["AccountID"] as? String ?? "unknown"
-                        jsonObject["AccountID"] = refAccountID
-                        log("Transfer: AccountID swap: \(oldAccountID) → \(refAccountID)")
-                    }
                     
                     // Write modified JSON to destination
                     let destJsonFile = destPath.appendingPathComponent(jsonFile.lastPathComponent)
