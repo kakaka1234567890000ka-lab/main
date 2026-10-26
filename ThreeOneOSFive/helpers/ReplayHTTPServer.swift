@@ -149,15 +149,20 @@ class ReplayHTTPServer: ObservableObject {
     }
     
     private func transferReplays() -> [String: Any] {
-        let containers = ContainerManagerService.shared.resolveAllContainers()
-        
-        guard let ffMaxContainer = containers.first(where: { $0.bundleID == "com.dts.freefiremax" }),
-              let ffNormalContainer = containers.first(where: { $0.bundleID == "com.dts.freefireth" }) else {
-            return ["success": false, "message": "Free Fire apps not found"]
+        // Get FF MAX container
+        var maxError: NSString?
+        guard let ffMaxPath = MCMActivateContainerPath(2, "com.dts.freefiremax", false, &maxError) else {
+            return ["success": false, "message": "Free Fire MAX not found"]
         }
         
-        let sourcePath = ffMaxContainer.url.appendingPathComponent("Documents/MReplays")
-        let destPath = ffNormalContainer.url.appendingPathComponent("Documents/MReplays")
+        // Get FF Normal container
+        var normalError: NSString?
+        guard let ffNormalPath = MCMActivateContainerPath(2, "com.dts.freefireth", false, &normalError) else {
+            return ["success": false, "message": "Free Fire Normal not found"]
+        }
+        
+        let sourcePath = URL(fileURLWithPath: ffMaxPath).appendingPathComponent("Documents/MReplays")
+        let destPath = URL(fileURLWithPath: ffNormalPath).appendingPathComponent("Documents/MReplays")
         
         let fileManager = FileManager.default
         
