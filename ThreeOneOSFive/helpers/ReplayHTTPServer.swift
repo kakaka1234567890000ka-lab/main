@@ -9,6 +9,8 @@ class ReplayHTTPServer: ObservableObject {
     func start() {
         guard listener == nil else { return }
         
+        log("HTTP Server: Attempting to start on port \(port)")
+        
         do {
             let parameters = NWParameters.tcp
             parameters.allowLocalEndpointReuse = true
@@ -16,6 +18,7 @@ class ReplayHTTPServer: ObservableObject {
             listener = try NWListener(using: parameters, on: NWEndpoint.Port(integerLiteral: port))
             
             listener?.newConnectionHandler = { [weak self] connection in
+                log("HTTP Server: New connection received")
                 self?.handleConnection(connection)
             }
             
@@ -24,21 +27,24 @@ class ReplayHTTPServer: ObservableObject {
                     switch state {
                     case .ready:
                         self?.isRunning = true
-                        log("HTTP Server: Started on port \(self?.port ?? 0)")
+                        log("HTTP Server: ✅ Started successfully on port \(self?.port ?? 0)")
                     case .failed(let error):
-                        log("HTTP Server: Failed - \(error)")
+                        log("HTTP Server: ❌ Failed - \(error)")
                         self?.isRunning = false
                     case .cancelled:
+                        log("HTTP Server: Cancelled")
                         self?.isRunning = false
                     default:
+                        log("HTTP Server: State changed to \(state)")
                         break
                     }
                 }
             }
             
             listener?.start(queue: .global(qos: .userInitiated))
+            log("HTTP Server: Listener started, waiting for ready state...")
         } catch {
-            log("HTTP Server: Failed to start - \(error)")
+            log("HTTP Server: ❌ Failed to start - \(error)")
         }
     }
     

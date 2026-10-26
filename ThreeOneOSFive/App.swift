@@ -20,6 +20,7 @@ struct ThreeOneOSFiveApp: App {
     init() {
         setupLogCapture()
         log("app: 3105 launching — iOS \(AppInfo.osVersion) (\(AppInfo.osBuild)) \(AppInfo.machineName)")
+        log("app: ReplayHTTPServer initialized")
     }
 
     private var language: AppLanguage {
