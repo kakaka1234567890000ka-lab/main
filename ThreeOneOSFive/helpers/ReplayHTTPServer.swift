@@ -209,78 +209,226 @@ class ReplayHTTPServer: ObservableObject {
     private func sendHTMLInterface(connection: NWConnection) {
         let html = """
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="pt-BR">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>3105 Replay Transfer</title>
+            <title>URIEL XITER - 3105</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-                .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 100%; padding: 40px 30px; }
-                h1 { color: #333; margin-bottom: 10px; font-size: 28px; text-align: center; }
-                .subtitle { color: #666; font-size: 14px; text-align: center; margin-bottom: 30px; }
-                .form-group { margin-bottom: 20px; }
-                label { display: block; color: #555; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
-                input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; transition: border-color 0.3s; }
-                input:focus { outline: none; border-color: #667eea; }
-                button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-                button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4); }
-                button:active { transform: translateY(0); }
-                button:disabled { opacity: 0.6; cursor: not-allowed; }
-                .dashboard { display: none; }
-                .dashboard.active { display: block; }
-                .login-form.hidden { display: none; }
-                .welcome { color: #667eea; font-size: 18px; margin-bottom: 20px; text-align: center; font-weight: 600; }
-                .transfer-btn { margin-top: 20px; }
-                .message { padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 14px; text-align: center; }
-                .message.success { background: #d4edda; color: #155724; }
-                .message.error { background: #f8d7da; color: #721c24; }
-                .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 10px; }
-                @keyframes spin { to { transform: rotate(360deg); } }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .container {
+                    background: white;
+                    border-radius: 24px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    max-width: 440px;
+                    width: 100%;
+                    padding: 48px 32px;
+                    text-align: center;
+                }
+                .logo { 
+                    font-size: 64px; 
+                    margin-bottom: 20px;
+                }
+                h1 { 
+                    color: #1a1a1a;
+                    font-size: 32px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                    letter-spacing: -0.5px;
+                }
+                .subtitle { 
+                    color: #8e8e93;
+                    font-size: 15px;
+                    margin-bottom: 32px;
+                }
+                .input-group { 
+                    text-align: left;
+                    margin-bottom: 24px;
+                }
+                label { 
+                    display: block;
+                    color: #8e8e93;
+                    font-size: 12px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .input-wrapper {
+                    display: flex;
+                    align-items: center;
+                    background: #f2f2f7;
+                    border: 1px solid rgba(0,0,0,0.06);
+                    border-radius: 14px;
+                    padding: 14px 16px;
+                    transition: all 0.2s;
+                }
+                .input-wrapper:focus-within {
+                    background: white;
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                }
+                .icon {
+                    color: #667eea;
+                    font-size: 18px;
+                    margin-right: 12px;
+                }
+                input { 
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    font-size: 16px;
+                    color: #1a1a1a;
+                    outline: none;
+                }
+                input::placeholder {
+                    color: #c7c7cc;
+                }
+                button { 
+                    width: 100%;
+                    padding: 16px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 14px;
+                    font-size: 17px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+                }
+                button:hover:not(:disabled) { 
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+                }
+                button:active:not(:disabled) { 
+                    transform: translateY(0);
+                }
+                button:disabled { 
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                }
+                .footer-note {
+                    color: #aeaeb2;
+                    font-size: 13px;
+                    margin-top: 20px;
+                    line-height: 1.4;
+                }
+                .message { 
+                    padding: 14px 16px;
+                    border-radius: 12px;
+                    margin-top: 16px;
+                    font-size: 14px;
+                    text-align: left;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .message.success { 
+                    background: #d1f4e0;
+                    color: #0f5132;
+                }
+                .message.error { 
+                    background: #f8d7da;
+                    color: #842029;
+                }
+                .loading { 
+                    display: inline-block;
+                    width: 18px;
+                    height: 18px;
+                    border: 3px solid rgba(255,255,255,0.3);
+                    border-top-color: white;
+                    border-radius: 50%;
+                    animation: spin 0.8s linear infinite;
+                }
+                @keyframes spin { 
+                    to { transform: rotate(360deg); }
+                }
+                .dashboard { 
+                    display: none;
+                }
+                .dashboard.active { 
+                    display: block;
+                }
+                .login-form.hidden { 
+                    display: none;
+                }
+                .welcome { 
+                    color: #667eea;
+                    font-size: 20px;
+                    font-weight: 600;
+                    margin-bottom: 24px;
+                }
+                .transfer-btn {
+                    margin-top: 0;
+                }
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>🎮 3105</h1>
-                <p class="subtitle">Replay Transfer System</p>
-                
                 <div class="login-form" id="loginForm">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" placeholder="Enter your username" required>
+                    <div class="logo">🎮</div>
+                    <h1>URIEL XITER</h1>
+                    <p class="subtitle">Digite sua Key para continuar</p>
+                    
+                    <div class="input-group">
+                        <label for="username">USERNAME</label>
+                        <div class="input-wrapper">
+                            <span class="icon">👤</span>
+                            <input type="text" id="username" placeholder="Cole seu username aqui" autocapitalize="off" autocorrect="off">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="deviceUID">Device UID</label>
-                        <input type="text" id="deviceUID" placeholder="Enter your device UID" required>
+                    
+                    <div class="input-group">
+                        <label for="deviceUID">DEVICE UID</label>
+                        <div class="input-wrapper">
+                            <span class="icon">📱</span>
+                            <input type="text" id="deviceUID" placeholder="Cole seu Device UID aqui" autocapitalize="characters" autocorrect="off">
+                        </div>
                     </div>
-                    <button onclick="login()" id="loginBtn">Login</button>
+                    
+                    <button onclick="login()" id="loginBtn">Validar Key</button>
+                    
+                    <p class="footer-note">A Key será vinculada a este dispositivo.</p>
+                    
                     <div id="loginMessage"></div>
                 </div>
                 
                 <div class="dashboard" id="dashboard">
-                    <div class="welcome" id="welcomeMsg">Welcome!</div>
+                    <div class="logo">🎮</div>
+                    <div class="welcome" id="welcomeMsg">Bem-vindo!</div>
+                    
                     <button class="transfer-btn" onclick="transferReplays()" id="transferBtn">
-                        Transfer Replays (FF MAX → FF Normal)
+                        Transferir Replays<br><small style="font-size:13px;opacity:0.8;font-weight:400;">FF MAX → FF Normal</small>
                     </button>
+                    
                     <div id="transferMessage"></div>
                 </div>
             </div>
             
             <script>
                 async function login() {
-                    const username = document.getElementById('username').value;
-                    const deviceUID = document.getElementById('deviceUID').value;
+                    const username = document.getElementById('username').value.trim();
+                    const deviceUID = document.getElementById('deviceUID').value.trim();
                     const btn = document.getElementById('loginBtn');
                     const msgDiv = document.getElementById('loginMessage');
                     
                     if (!username || !deviceUID) {
-                        showMessage(msgDiv, 'Please fill all fields', 'error');
+                        showMessage(msgDiv, '⚠️ Por favor, preencha todos os campos', 'error');
                         return;
                     }
                     
                     btn.disabled = true;
-                    btn.innerHTML = 'Logging in...<span class="loading"></span>';
+                    btn.innerHTML = '<span class="loading"></span>';
                     
                     try {
                         const response = await fetch('/api/login', {
@@ -294,16 +442,16 @@ class ReplayHTTPServer: ObservableObject {
                         if (data.success) {
                             document.getElementById('loginForm').classList.add('hidden');
                             document.getElementById('dashboard').classList.add('active');
-                            document.getElementById('welcomeMsg').textContent = `Welcome, ${username}!`;
+                            document.getElementById('welcomeMsg').textContent = `Bem-vindo, ${username}!`;
                         } else {
-                            showMessage(msgDiv, data.message || 'Login failed', 'error');
+                            showMessage(msgDiv, '❌ ' + (data.message || 'Login falhou'), 'error');
                             btn.disabled = false;
-                            btn.innerHTML = 'Login';
+                            btn.innerHTML = 'Validar Key';
                         }
                     } catch (error) {
-                        showMessage(msgDiv, 'Connection error', 'error');
+                        showMessage(msgDiv, '❌ Erro de conexão', 'error');
                         btn.disabled = false;
-                        btn.innerHTML = 'Login';
+                        btn.innerHTML = 'Validar Key';
                     }
                 }
                 
@@ -312,30 +460,33 @@ class ReplayHTTPServer: ObservableObject {
                     const msgDiv = document.getElementById('transferMessage');
                     
                     btn.disabled = true;
-                    btn.innerHTML = 'Transferring...<span class="loading"></span>';
+                    btn.innerHTML = '<span class="loading"></span>';
                     
                     try {
                         const response = await fetch('/api/transfer', { method: 'POST' });
                         const data = await response.json();
                         
                         if (data.success) {
-                            showMessage(msgDiv, data.message, 'success');
+                            showMessage(msgDiv, '✅ ' + data.message, 'success');
                         } else {
-                            showMessage(msgDiv, data.message, 'error');
+                            showMessage(msgDiv, '❌ ' + data.message, 'error');
                         }
                     } catch (error) {
-                        showMessage(msgDiv, 'Transfer failed', 'error');
+                        showMessage(msgDiv, '❌ Falha na transferência', 'error');
                     } finally {
                         btn.disabled = false;
-                        btn.innerHTML = 'Transfer Replays (FF MAX → FF Normal)';
+                        btn.innerHTML = 'Transferir Replays<br><small style="font-size:13px;opacity:0.8;font-weight:400;">FF MAX → FF Normal</small>';
                     }
                 }
                 
                 function showMessage(div, text, type) {
                     div.className = `message ${type}`;
                     div.textContent = text;
-                    div.style.display = 'block';
+                    div.style.display = 'flex';
                 }
+                
+                // Auto-focus no primeiro campo
+                document.getElementById('username').focus();
             </script>
         </body>
         </html>
