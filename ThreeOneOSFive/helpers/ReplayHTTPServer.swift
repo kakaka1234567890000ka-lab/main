@@ -110,40 +110,63 @@ class ReplayHTTPServer: ObservableObject {
         let body = String(request[bodyStart...])
         let params = parseFormData(body)
         
-        guard let username = params["username"], let deviceUID = params["deviceUID"] else {
-            sendJSONResponse(connection: connection, json: ["success": false, "message": "Missing credentials"])
+        guard let key = params["key"] else {
+            sendJSONResponse(connection: connection, json: ["success": false, "message": "Missing key"])
             return
         }
         
+        // Get device UID (same as app)
+        let deviceUID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        
         // Validate with urielxiter.shop
-        validateLogin(username: username, deviceUID: deviceUID) { success in
+        validateLogin(username: key, deviceUID: deviceUID) { success in
             if success {
                 self.sendJSONResponse(connection: connection, json: ["success": true, "message": "Login successful"])
             } else {
-                self.sendJSONResponse(connection: connection, json: ["success": false, "message": "Invalid credentials"])
+                self.sendJSONResponse(connection: connection, json: ["success": false, "message": "Key inválida"])
             }
         }
     }
     
     private func validateLogin(username: String, deviceUID: String, completion: @escaping (Bool) -> Void) {
-        guard let url = URL(string: "https://urielxiter.shop/mod/CheckLogin.php") else {
+        var components = URLComponents(string: "https://urielxiter.shop/mod/CheckLogin.php")
+        components?.queryItems = [
+            URLQueryItem(name: "user", value: username),
+            URLQueryItem(name: "uid", value: deviceUID)
+        ]
+        
+        guard let url = components?.url else {
             completion(false)
             return
         }
         
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "user=\(username)&deviceUID=\(deviceUID)".data(using: .utf8)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 15
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data,
-                  let responseText = String(data: data, encoding: .utf8) else {
+                  let responseText = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
                 completion(false)
                 return
             }
             
-            completion(responseText.contains("success") || responseText.contains("valid"))
+            // Same validation as KeyAuthService
+            let errorPrefixes = [
+                "Em manutenção",
+                "Usuário inválido",
+                "Dispositivo não permitido",
+                "Usuário banido",
+                "Usuário pausado",
+                "Key expirada",
+                "Configuração de dispositivo inválida",
+                "ﾠ"
+            ]
+            
+            let isError = errorPrefixes.contains(where: { responseText.lowercased().hasPrefix($0.lowercased()) })
+                || responseText.isEmpty
+            
+            completion(!isError)
         }.resume()
     }
     
@@ -381,18 +404,10 @@ class ReplayHTTPServer: ObservableObject {
                     <p class="subtitle">Digite sua Key para continuar</p>
                     
                     <div class="input-group">
-                        <label for="username">USERNAME</label>
+                        <label for="key">KEY</label>
                         <div class="input-wrapper">
-                            <span class="icon">👤</span>
-                            <input type="text" id="username" placeholder="Cole seu username aqui" autocapitalize="off" autocorrect="off">
-                        </div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="deviceUID">DEVICE UID</label>
-                        <div class="input-wrapper">
-                            <span class="icon">📱</span>
-                            <input type="text" id="deviceUID" placeholder="Cole seu Device UID aqui" autocapitalize="characters" autocorrect="off">
+                            <span class="icon">🔑</span>
+                            <input type="text" id="key" placeholder="Cole sua Key aqui" autocapitalize="characters" autocorrect="off">
                         </div>
                     </div>
                     
@@ -417,13 +432,12 @@ class ReplayHTTPServer: ObservableObject {
             
             <script>
                 async function login() {
-                    const username = document.getElementById('username').value.trim();
-                    const deviceUID = document.getElementById('deviceUID').value.trim();
+                    const key = document.getElementById('key').value.trim();
                     const btn = document.getElementById('loginBtn');
                     const msgDiv = document.getElementById('loginMessage');
                     
-                    if (!username || !deviceUID) {
-                        showMessage(msgDiv, '⚠️ Por favor, preencha todos os campos', 'error');
+                    if (!key) {
+                        showMessage(msgDiv, '⚠️ Por favor, cole sua Key', 'error');
                         return;
                     }
                     
@@ -434,7 +448,7 @@ class ReplayHTTPServer: ObservableObject {
                         const response = await fetch('/api/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `username=${encodeURIComponent(username)}&deviceUID=${encodeURIComponent(deviceUID)}`
+                            body: `key=${encodeURIComponent(key)}`
                         });
                         
                         const data = await response.json();
@@ -442,9 +456,9 @@ class ReplayHTTPServer: ObservableObject {
                         if (data.success) {
                             document.getElementById('loginForm').classList.add('hidden');
                             document.getElementById('dashboard').classList.add('active');
-                            document.getElementById('welcomeMsg').textContent = `Bem-vindo, ${username}!`;
+                            document.getElementById('welcomeMsg').textContent = 'Bem-vindo!';
                         } else {
-                            showMessage(msgDiv, '❌ ' + (data.message || 'Login falhou'), 'error');
+                            showMessage(msgDiv, '❌ ' + (data.message || 'Key inválida'), 'error');
                             btn.disabled = false;
                             btn.innerHTML = 'Validar Key';
                         }
@@ -485,8 +499,8 @@ class ReplayHTTPServer: ObservableObject {
                     div.style.display = 'flex';
                 }
                 
-                // Auto-focus no primeiro campo
-                document.getElementById('username').focus();
+                // Auto-focus no campo KEY
+                document.getElementById('key').focus();
             </script>
         </body>
         </html>
