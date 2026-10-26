@@ -101,25 +101,34 @@ class ReplayHTTPServer: ObservableObject {
     }
     
     private func handleLogin(request: String, connection: NWConnection) {
+        log("HTTP Server: Login request received")
+        
         // Extract POST body
         guard let bodyStart = request.range(of: "\r\n\r\n")?.upperBound else {
+            log("HTTP Server: Login failed - no body")
             sendJSONResponse(connection: connection, json: ["success": false, "message": "Invalid request"])
             return
         }
         
         let body = String(request[bodyStart...])
+        log("HTTP Server: Request body: \(body)")
+        
         let params = parseFormData(body)
+        log("HTTP Server: Parsed params: \(params)")
         
         guard let key = params["key"] else {
+            log("HTTP Server: Login failed - no key")
             sendJSONResponse(connection: connection, json: ["success": false, "message": "Missing key"])
             return
         }
         
         // Get device UID (same as app)
         let deviceUID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        log("HTTP Server: Validating key=\(key) deviceUID=\(deviceUID)")
         
         // Validate with urielxiter.shop
         validateLogin(username: key, deviceUID: deviceUID) { success in
+            log("HTTP Server: Validation result: \(success)")
             if success {
                 self.sendJSONResponse(connection: connection, json: ["success": true, "message": "Login successful"])
             } else {

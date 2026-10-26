@@ -16,6 +16,7 @@ struct ThreeOneOSFiveApp: App {
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
     init() {
         setupLogCapture()
@@ -95,13 +96,43 @@ struct ThreeOneOSFiveApp: App {
                 }
             }
             .onChange(of: scenePhase) { phase in
-                guard phase == .active, !showOnboarding, keyAuth.isAuthenticated else { return }
-                appState.detectSupport()
+                guard keyAuth.isAuthenticated else { return }
+                
+                switch phase {
+                case .active:
+                    log("app: Entering foreground - ensuring server is running")
+                    httpServer.start()
+                    if !showOnboarding {
+                        appState.detectSupport()
+                    }
+                    endBackgroundTask()
+                    
+                case .background:
+                    log("app: Entering background - keeping server alive")
+                    beginBackgroundTask()
+                    
+                default:
+                    break
+                }
             }
             .onOpenURL { url in
                 patchDraftCoordinator.presentImport(url)
             }
         }
+    }
+    
+    private func beginBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [self] in
+            endBackgroundTask()
+        }
+        log("app: Background task started - ID: \(backgroundTask.rawValue)")
+    }
+    
+    private func endBackgroundTask() {
+        guard backgroundTask != .invalid else { return }
+        log("app: Background task ended - ID: \(backgroundTask.rawValue)")
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 }
 
