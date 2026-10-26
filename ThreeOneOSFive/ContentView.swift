@@ -42,10 +42,13 @@ struct ContentView: View {
     }
 
     var body: some View {
-        PatchProjectsView(
-            onOpenSettings: openSettings,
-            onOpenLogs: openLogs
-        )
+        Group {
+            if horizontalSizeClass == .compact {
+                compactLayout
+            } else {
+                regularLayout
+            }
+        }
         .tint(AppTheme.accent)
         .imageScale(.small)
         .onChange(of: patchDraftCoordinator.request?.id) { requestID in
@@ -124,7 +127,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .new:
-            RepositoryNewView(
+            RepositoryMarketplaceView(
                 onOpenSettings: openSettings,
                 onOpenLogs: openLogs
             )
@@ -145,7 +148,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .search:
-            RepositorySearchView(
+            RepositoryMarketplaceView(
                 onOpenSettings: openSettings,
                 onOpenLogs: openLogs
             )
