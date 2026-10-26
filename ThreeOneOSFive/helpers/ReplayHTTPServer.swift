@@ -414,194 +414,361 @@ class ReplayHTTPServer: ObservableObject {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>URIEL XITER - 3105</title>
+            <title>URIEL XITER - REPLAY TRANSFER</title>
             <style>
+                @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+                
                 * { margin: 0; padding: 0; box-sizing: border-box; }
+                
                 body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    font-family: 'Rajdhani', -apple-system, sans-serif;
+                    background: #0a0a0a;
                     min-height: 100vh;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     padding: 20px;
+                    overflow: hidden;
+                    position: relative;
                 }
+                
+                body::before {
+                    content: '';
+                    position: fixed;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: 
+                        radial-gradient(circle at 20% 50%, rgba(220, 20, 60, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 50%, rgba(139, 0, 0, 0.15) 0%, transparent 50%);
+                    animation: bgShift 20s ease-in-out infinite;
+                }
+                
+                @keyframes bgShift {
+                    0%, 100% { transform: translate(0, 0); }
+                    50% { transform: translate(-30px, -30px); }
+                }
+                
+                .scan-line {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: linear-gradient(90deg, transparent, #ff0000, transparent);
+                    animation: scan 4s linear infinite;
+                    opacity: 0.3;
+                    pointer-events: none;
+                }
+                
+                @keyframes scan {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(100vh); }
+                }
+                
                 .container {
-                    background: white;
-                    border-radius: 24px;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    background: rgba(15, 15, 15, 0.95);
+                    border: 2px solid #ff0000;
+                    border-radius: 0;
+                    box-shadow: 
+                        0 0 30px rgba(255, 0, 0, 0.3),
+                        inset 0 0 50px rgba(255, 0, 0, 0.05);
                     max-width: 440px;
                     width: 100%;
-                    padding: 48px 32px;
+                    padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                    z-index: 1;
                 }
-                .logo { 
-                    font-size: 64px; 
-                    margin-bottom: 20px;
+                
+                .container::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, #ff0000, transparent);
                 }
-                h1 { 
-                    color: #1a1a1a;
-                    font-size: 32px;
+                
+                .container::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, #ff0000, transparent);
+                }
+                
+                .header {
+                    margin-bottom: 30px;
+                    position: relative;
+                }
+                
+                .glitch {
+                    font-size: 42px;
                     font-weight: 700;
-                    margin-bottom: 8px;
-                    letter-spacing: -0.5px;
+                    color: #ff0000;
+                    text-transform: uppercase;
+                    letter-spacing: 4px;
+                    position: relative;
+                    text-shadow: 
+                        0 0 10px #ff0000,
+                        0 0 20px #ff0000,
+                        0 0 30px #ff0000;
+                    animation: flicker 3s infinite;
                 }
+                
+                @keyframes flicker {
+                    0%, 100% { opacity: 1; }
+                    41%, 43% { opacity: 0.8; }
+                    42% { opacity: 1; }
+                }
+                
+                .team-name {
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: #666;
+                    text-transform: uppercase;
+                    letter-spacing: 3px;
+                    margin-top: 8px;
+                }
+                
                 .subtitle { 
-                    color: #8e8e93;
+                    color: #888;
                     font-size: 15px;
-                    margin-bottom: 32px;
+                    margin-bottom: 30px;
+                    font-weight: 300;
+                    letter-spacing: 1px;
                 }
+                
                 .input-group { 
                     text-align: left;
                     margin-bottom: 24px;
                 }
+                
                 label { 
                     display: block;
-                    color: #8e8e93;
-                    font-size: 12px;
+                    color: #ff0000;
+                    font-size: 11px;
                     font-weight: 600;
-                    margin-bottom: 8px;
+                    margin-bottom: 10px;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 2px;
                 }
+                
                 .input-wrapper {
-                    display: flex;
-                    align-items: center;
-                    background: #f2f2f7;
-                    border: 1px solid rgba(0,0,0,0.06);
-                    border-radius: 14px;
-                    padding: 14px 16px;
-                    transition: all 0.2s;
+                    position: relative;
+                    background: rgba(0, 0, 0, 0.6);
+                    border: 1px solid #333;
+                    transition: all 0.3s;
                 }
+                
                 .input-wrapper:focus-within {
-                    background: white;
-                    border-color: #667eea;
-                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                    border-color: #ff0000;
+                    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
                 }
-                .icon {
-                    color: #667eea;
-                    font-size: 18px;
-                    margin-right: 12px;
+                
+                .input-wrapper::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 0;
+                    height: 100%;
+                    background: rgba(255, 0, 0, 0.1);
+                    transition: width 0.3s;
                 }
+                
+                .input-wrapper:focus-within::before {
+                    width: 100%;
+                }
+                
                 input { 
-                    flex: 1;
+                    width: 100%;
+                    padding: 16px;
                     border: none;
                     background: transparent;
                     font-size: 16px;
-                    color: #1a1a1a;
+                    font-family: 'Rajdhani', monospace;
+                    color: #fff;
                     outline: none;
+                    position: relative;
+                    z-index: 1;
+                    font-weight: 500;
+                    letter-spacing: 1px;
                 }
+                
                 input::placeholder {
-                    color: #c7c7cc;
+                    color: #555;
                 }
+                
                 button { 
                     width: 100%;
-                    padding: 16px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    border: none;
-                    border-radius: 14px;
-                    font-size: 17px;
-                    font-weight: 600;
+                    padding: 18px;
+                    background: linear-gradient(135deg, #8b0000 0%, #ff0000 100%);
+                    color: #fff;
+                    border: 1px solid #ff0000;
+                    font-size: 16px;
+                    font-weight: 700;
                     cursor: pointer;
                     transition: all 0.3s;
-                    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    font-family: 'Rajdhani', sans-serif;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
                 }
+                
+                button::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s, height 0.6s;
+                }
+                
+                button:hover:not(:disabled)::before {
+                    width: 300px;
+                    height: 300px;
+                }
+                
                 button:hover:not(:disabled) { 
+                    box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
                     transform: translateY(-2px);
-                    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
                 }
+                
                 button:active:not(:disabled) { 
                     transform: translateY(0);
                 }
+                
                 button:disabled { 
-                    opacity: 0.4;
+                    opacity: 0.5;
                     cursor: not-allowed;
                 }
+                
                 .footer-note {
-                    color: #aeaeb2;
-                    font-size: 13px;
+                    color: #555;
+                    font-size: 12px;
                     margin-top: 20px;
-                    line-height: 1.4;
+                    line-height: 1.6;
+                    font-weight: 300;
                 }
+                
                 .message { 
                     padding: 14px 16px;
-                    border-radius: 12px;
                     margin-top: 16px;
-                    font-size: 14px;
+                    font-size: 13px;
                     text-align: left;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
+                    border-left: 3px solid;
+                    background: rgba(0, 0, 0, 0.5);
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
                 }
+                
                 .message.success { 
-                    background: #d1f4e0;
-                    color: #0f5132;
+                    border-color: #00ff00;
+                    color: #00ff00;
                 }
+                
                 .message.error { 
-                    background: #f8d7da;
-                    color: #842029;
+                    border-color: #ff0000;
+                    color: #ff6666;
                 }
+                
                 .loading { 
                     display: inline-block;
-                    width: 18px;
-                    height: 18px;
-                    border: 3px solid rgba(255,255,255,0.3);
-                    border-top-color: white;
+                    width: 20px;
+                    height: 20px;
+                    border: 3px solid rgba(255, 0, 0, 0.3);
+                    border-top-color: #ff0000;
                     border-radius: 50%;
                     animation: spin 0.8s linear infinite;
                 }
+                
                 @keyframes spin { 
                     to { transform: rotate(360deg); }
                 }
+                
                 .dashboard { 
                     display: none;
                 }
+                
                 .dashboard.active { 
                     display: block;
                 }
+                
                 .login-form.hidden { 
                     display: none;
                 }
+                
                 .welcome { 
-                    color: #667eea;
-                    font-size: 20px;
+                    color: #ff0000;
+                    font-size: 24px;
                     font-weight: 600;
-                    margin-bottom: 24px;
+                    margin-bottom: 30px;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
                 }
-                .transfer-btn {
-                    margin-top: 0;
+                
+                .transfer-info {
+                    background: rgba(255, 0, 0, 0.05);
+                    border: 1px solid #333;
+                    padding: 12px;
+                    margin-bottom: 20px;
+                    font-size: 12px;
+                    color: #888;
+                    letter-spacing: 1px;
                 }
             </style>
         </head>
         <body>
+            <div class="scan-line"></div>
+            
             <div class="container">
                 <div class="login-form" id="loginForm">
-                    <div class="logo">🎮</div>
-                    <h1>URIEL XITER</h1>
-                    <p class="subtitle">Digite sua Key para continuar</p>
+                    <div class="header">
+                        <div class="glitch">URIEL XITER</div>
+                        <div class="team-name">REPLAY TRANSFER</div>
+                    </div>
+                    <p class="subtitle">ACESSO RESTRITO</p>
                     
                     <div class="input-group">
-                        <label for="key">KEY</label>
+                        <label for="key">AUTHENTICATION KEY</label>
                         <div class="input-wrapper">
-                            <span class="icon">🔑</span>
-                            <input type="text" id="key" placeholder="Cole sua Key aqui" autocapitalize="characters" autocorrect="off">
+                            <input type="text" id="key" placeholder="INSIRA SUA KEY" autocapitalize="characters" autocorrect="off">
                         </div>
                     </div>
                     
-                    <button onclick="login()" id="loginBtn">Validar Key</button>
+                    <button onclick="login()" id="loginBtn">VALIDAR ACESSO</button>
                     
-                    <p class="footer-note">A Key será vinculada a este dispositivo.</p>
+                    <p class="footer-note">Key vinculada ao dispositivo atual</p>
                     
                     <div id="loginMessage"></div>
                 </div>
                 
                 <div class="dashboard" id="dashboard">
-                    <div class="logo">🎮</div>
-                    <div class="welcome" id="welcomeMsg">Bem-vindo!</div>
+                    <div class="header">
+                        <div class="glitch">URIEL XITER</div>
+                        <div class="team-name">REPLAY TRANSFER</div>
+                    </div>
+                    <div class="welcome" id="welcomeMsg">ACESSO CONCEDIDO</div>
                     
-                    <button class="transfer-btn" onclick="transferReplays()" id="transferBtn">
-                        Transferir Replays<br><small style="font-size:13px;opacity:0.8;font-weight:400;">FF MAX → FF Normal</small>
+                    <div class="transfer-info">
+                        FF MAX → FF NORMAL
+                    </div>
+                    
+                    <button onclick="transferReplays()" id="transferBtn">
+                        INICIAR TRANSFERÊNCIA
                     </button>
                     
                     <div id="transferMessage"></div>
@@ -615,7 +782,7 @@ class ReplayHTTPServer: ObservableObject {
                     const msgDiv = document.getElementById('loginMessage');
                     
                     if (!key) {
-                        showMessage(msgDiv, '⚠️ Por favor, cole sua Key', 'error');
+                        showMessage(msgDiv, 'KEY OBRIGATÓRIA', 'error');
                         return;
                     }
                     
@@ -634,16 +801,15 @@ class ReplayHTTPServer: ObservableObject {
                         if (data.success) {
                             document.getElementById('loginForm').classList.add('hidden');
                             document.getElementById('dashboard').classList.add('active');
-                            document.getElementById('welcomeMsg').textContent = 'Bem-vindo!';
                         } else {
-                            showMessage(msgDiv, '❌ ' + (data.message || 'Key inválida'), 'error');
+                            showMessage(msgDiv, 'ACESSO NEGADO: ' + (data.message || 'KEY INVÁLIDA'), 'error');
                             btn.disabled = false;
-                            btn.innerHTML = 'Validar Key';
+                            btn.innerHTML = 'VALIDAR ACESSO';
                         }
                     } catch (error) {
-                        showMessage(msgDiv, '❌ Erro de conexão', 'error');
+                        showMessage(msgDiv, 'ERRO DE CONEXÃO', 'error');
                         btn.disabled = false;
-                        btn.innerHTML = 'Validar Key';
+                        btn.innerHTML = 'VALIDAR ACESSO';
                     }
                 }
                 
@@ -659,25 +825,24 @@ class ReplayHTTPServer: ObservableObject {
                         const data = await response.json();
                         
                         if (data.success) {
-                            showMessage(msgDiv, '✅ ' + data.message, 'success');
+                            showMessage(msgDiv, 'TRANSFERÊNCIA CONCLUÍDA: ' + data.message, 'success');
                         } else {
-                            showMessage(msgDiv, '❌ ' + data.message, 'error');
+                            showMessage(msgDiv, 'FALHA: ' + data.message, 'error');
                         }
                     } catch (error) {
-                        showMessage(msgDiv, '❌ Falha na transferência', 'error');
+                        showMessage(msgDiv, 'ERRO NA TRANSFERÊNCIA', 'error');
                     } finally {
                         btn.disabled = false;
-                        btn.innerHTML = 'Transferir Replays<br><small style="font-size:13px;opacity:0.8;font-weight:400;">FF MAX → FF Normal</small>';
+                        btn.innerHTML = 'INICIAR TRANSFERÊNCIA';
                     }
                 }
                 
                 function showMessage(div, text, type) {
                     div.className = `message ${type}`;
                     div.textContent = text;
-                    div.style.display = 'flex';
+                    div.style.display = 'block';
                 }
                 
-                // Auto-focus no campo KEY
                 document.getElementById('key').focus();
             </script>
         </body>
