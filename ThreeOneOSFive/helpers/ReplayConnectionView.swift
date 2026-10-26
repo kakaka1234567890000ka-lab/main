@@ -1,186 +1,226 @@
 import SwiftUI
 
 struct ReplayConnectionView: View {
-    @StateObject private var connectionManager = ReplayConnectionManager()
-    @State private var serverIP: String = ""
-    @State private var serverPort: String = "8080"
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var alertTitle = "Transfer"
+    @State private var isTransferring = false
     
     var body: some View {
         ZStack {
-            // Dark background
             Color.black.ignoresSafeArea()
             
             VStack(spacing: 30) {
-                Spacer()
-                
-                // Title
+                // Header
                 VStack(spacing: 8) {
                     Text("URIEL XITER")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .font(.system(size: 42, weight: .bold))
                         .foregroundColor(.red)
                         .shadow(color: .red.opacity(0.5), radius: 10)
                     
                     Text("REPLAY TRANSFER")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.gray)
-                        .tracking(3)
+                        .tracking(2)
                 }
-                .padding(.bottom, 20)
+                .padding(.top, 80)
                 
-                // Connection Form
-                VStack(spacing: 20) {
-                    // IP Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("SERVER IP")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(.red)
-                            .tracking(2)
-                        
-                        TextField("192.168.1.100", text: $serverIP)
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.05))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 0)
-                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                            )
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .keyboardType(.decimalPad)
-                    }
-                    
-                    // Port Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("PORT")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(.red)
-                            .tracking(2)
-                        
-                        TextField("8080", text: $serverPort)
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.05))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 0)
-                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                            )
-                            .keyboardType(.numberPad)
-                    }
-                    
-                    // Status
+                Spacer()
+                
+                // Transfer Button
+                Button(action: transferReplays) {
                     HStack {
-                        Circle()
-                            .fill(connectionManager.isConnected ? Color.green : Color.red)
-                            .frame(width: 8, height: 8)
-                        
-                        Text(connectionManager.isConnected ? "CONNECTED" : "DISCONNECTED")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(connectionManager.isConnected ? .green : .red)
-                            .tracking(1)
-                    }
-                    .padding(.top, 10)
-                    
-                    // Connect Button
-                    Button(action: connectToServer) {
-                        HStack {
-                            if connectionManager.isConnecting {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                            }
-                            Text(connectionManager.isConnecting ? "CONNECTING..." : "CONNECT")
-                                .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                .tracking(2)
+                        if isTransferring {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            LinearGradient(
-                                colors: [Color(red: 0.55, green: 0, blue: 0), Color.red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 0)
-                                .stroke(Color.red, lineWidth: 1)
-                        )
-                        .shadow(color: .red.opacity(0.4), radius: 10)
+                        Text(isTransferring ? "TRANSFERRING..." : "URIEL XITER")
+                            .font(.system(size: 18, weight: .bold))
+                            .tracking(3)
                     }
-                    .disabled(connectionManager.isConnecting || serverIP.isEmpty)
-                    .opacity(serverIP.isEmpty ? 0.5 : 1.0)
-                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.55, green: 0, blue: 0), .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(0)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.red, lineWidth: 2)
+                    )
+                    .shadow(color: .red.opacity(0.5), radius: 20)
                 }
+                .disabled(isTransferring)
                 .padding(.horizontal, 30)
                 
                 Spacer()
                 
-                // Footer
-                VStack(spacing: 4) {
-                    Text("Keep app open for remote control")
-                        .font(.system(size: 11, weight: .regular, design: .monospaced))
-                        .foregroundColor(.gray)
+                // Info
+                VStack(spacing: 8) {
+                    Text("Tap to transfer replays")
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray.opacity(0.6))
                     
-                    if let localIP = getLocalIPAddress() {
-                        Text("Device IP: \(localIP)")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundColor(.red.opacity(0.6))
-                    }
+                    Text("FF MAX → FF Normal")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.red.opacity(0.8))
                 }
-                .padding(.bottom, 30)
+                .padding(.bottom, 60)
             }
         }
-        .alert("Connection", isPresented: $showAlert) {
-            Button("OK") { }
-        } message: {
-            Text(alertMessage)
-        }
-        .onAppear {
-            connectionManager.startLocalServer()
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text(alertTitle),
+                message: Text(alertMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
     
-    private func connectToServer() {
-        guard !serverIP.isEmpty else { return }
+    private func transferReplays() {
+        isTransferring = true
         
-        let port = Int(serverPort) ?? 8080
-        connectionManager.connectToServer(ip: serverIP, port: port) { success, message in
-            alertMessage = message
-            showAlert = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = executeTransfer()
+            
+            DispatchQueue.main.async {
+                isTransferring = false
+                
+                if result["success"] as? Bool == true {
+                    showSuccess(result["message"] as? String ?? "Transfer completed!")
+                } else {
+                    showError(result["message"] as? String ?? "Transfer failed")
+                }
+            }
         }
     }
     
-    private func getLocalIPAddress() -> String? {
-        var address: String?
-        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+    private func executeTransfer() -> [String: Any] {
+        log("Transfer: Starting replay transfer")
         
-        if getifaddrs(&ifaddr) == 0 {
-            var ptr = ifaddr
-            while ptr != nil {
-                defer { ptr = ptr?.pointee.ifa_next }
-                
-                let interface = ptr?.pointee
-                let addrFamily = interface?.ifa_addr.pointee.sa_family
-                
-                if addrFamily == UInt8(AF_INET) {
-                    let name = String(cString: (interface?.ifa_name)!)
-                    if name == "en0" {
-                        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                        getnameinfo(interface?.ifa_addr, socklen_t((interface?.ifa_addr.pointee.sa_len)!),
-                                    &hostname, socklen_t(hostname.count),
-                                    nil, socklen_t(0), NI_NUMERICHOST)
-                        address = String(cString: hostname)
-                    }
-                }
-            }
-            freeifaddrs(ifaddr)
+        var maxError: NSString?
+        guard let ffMaxPath = MCMActivateContainerPath(2, "com.dts.freefiremax", false, &maxError) else {
+            log("Transfer: FF MAX not found")
+            return ["success": false, "message": "Free Fire MAX não encontrado"]
         }
         
-        return address
+        var normalError: NSString?
+        guard let ffNormalPath = MCMActivateContainerPath(2, "com.dts.freefireth", false, &normalError) else {
+            log("Transfer: FF Normal not found")
+            return ["success": false, "message": "Free Fire Normal não encontrado"]
+        }
+        
+        let sourcePath = URL(fileURLWithPath: ffMaxPath).appendingPathComponent("Documents/MReplays")
+        let destPath = URL(fileURLWithPath: ffNormalPath).appendingPathComponent("Documents/MReplays")
+        
+        let fileManager = FileManager.default
+        
+        guard fileManager.fileExists(atPath: sourcePath.path) else {
+            return ["success": false, "message": "Pasta de replays do FF MAX não existe"]
+        }
+        
+        do {
+            try fileManager.createDirectory(at: destPath, withIntermediateDirectories: true)
+        } catch {
+            return ["success": false, "message": "Erro ao criar pasta destino"]
+        }
+        
+        // Get reference Version from FF Normal
+        var referenceVersion: String = "1.123.1"
+        do {
+            let destFiles = try fileManager.contentsOfDirectory(at: destPath, includingPropertiesForKeys: [.creationDateKey])
+            let jsonFiles = destFiles.filter { $0.pathExtension == "json" }
+            
+            if let mostRecent = jsonFiles.sorted(by: {
+                let date1 = try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
+                let date2 = try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
+                return (date1 ?? Date.distantPast) > (date2 ?? Date.distantPast)
+            }).first {
+                if let jsonData = try? Data(contentsOf: mostRecent),
+                   let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+                   let version = jsonObject["Version"] as? String {
+                    referenceVersion = version
+                    log("Transfer: Reference Version = \(version)")
+                }
+            }
+        } catch {}
+        
+        // Process replays
+        do {
+            let files = try fileManager.contentsOfDirectory(at: sourcePath, includingPropertiesForKeys: nil)
+            let jsonFiles = files.filter { $0.pathExtension == "json" }
+            
+            guard !jsonFiles.isEmpty else {
+                return ["success": false, "message": "Nenhum replay encontrado"]
+            }
+            
+            var transferred = 0
+            
+            for jsonFile in jsonFiles {
+                let baseName = jsonFile.deletingPathExtension().lastPathComponent
+                let binFile = sourcePath.appendingPathComponent("\(baseName).bin")
+                
+                guard fileManager.fileExists(atPath: binFile.path) else { continue }
+                
+                guard let jsonData = try? Data(contentsOf: jsonFile),
+                      var jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                    continue
+                }
+                
+                // Swap Version only
+                jsonObject["Version"] = referenceVersion
+                
+                let destJsonFile = destPath.appendingPathComponent(jsonFile.lastPathComponent)
+                let modifiedJsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted])
+                
+                if fileManager.fileExists(atPath: destJsonFile.path) {
+                    try? fileManager.removeItem(at: destJsonFile)
+                }
+                try modifiedJsonData.write(to: destJsonFile, options: [.atomic])
+                
+                // Force sync
+                if let fileHandle = FileHandle(forWritingAtPath: destJsonFile.path) {
+                    fileHandle.synchronizeFile()
+                    fileHandle.closeFile()
+                }
+                
+                // Copy bin
+                let destBinFile = destPath.appendingPathComponent(binFile.lastPathComponent)
+                if fileManager.fileExists(atPath: destBinFile.path) {
+                    try? fileManager.removeItem(at: destBinFile)
+                }
+                try fileManager.copyItem(at: binFile, to: destBinFile)
+                
+                if let fileHandle = FileHandle(forWritingAtPath: destBinFile.path) {
+                    fileHandle.synchronizeFile()
+                    fileHandle.closeFile()
+                }
+                
+                transferred += 1
+            }
+            
+            log("Transfer: Completed - \(transferred) replays")
+            return ["success": true, "message": "Transferidos \(transferred) replays!", "count": transferred]
+        } catch {
+            log("Transfer: Error - \(error)")
+            return ["success": false, "message": "Erro: \(error.localizedDescription)"]
+        }
+    }
+    
+    private func showSuccess(_ message: String) {
+        alertTitle = "Success"
+        alertMessage = message
+        showAlert = true
+    }
+    
+    private func showError(_ message: String) {
+        alertTitle = "Error"
+        alertMessage = message
+        showAlert = true
     }
 }
