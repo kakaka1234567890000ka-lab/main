@@ -236,17 +236,23 @@ class ReplayHTTPServer: ObservableObject {
             let files = try fileManager.contentsOfDirectory(at: sourcePath, includingPropertiesForKeys: nil)
             log("Transfer: Found \(files.count) total files in source")
             
-            let replayFiles = files.filter { $0.pathExtension.lowercased() == "replay" }
-            log("Transfer: Found \(replayFiles.count) .replay files")
+            // List all files with their extensions
+            for file in files {
+                log("Transfer: File found: \(file.lastPathComponent) (ext: \(file.pathExtension))")
+            }
             
-            if replayFiles.isEmpty {
-                return ["success": false, "message": "Nenhum replay encontrado no FF MAX"]
+            // Copy ALL files (not just .replay)
+            let filesToCopy = files.filter { !$0.hasDirectoryPath }
+            log("Transfer: Will copy \(filesToCopy.count) files")
+            
+            if filesToCopy.isEmpty {
+                return ["success": false, "message": "Nenhum arquivo encontrado na pasta de replays"]
             }
             
             var transferred = 0
             var errors: [String] = []
             
-            for file in replayFiles {
+            for file in filesToCopy {
                 log("Transfer: Processing \(file.lastPathComponent)")
                 let destFile = destPath.appendingPathComponent(file.lastPathComponent)
                 
@@ -268,7 +274,7 @@ class ReplayHTTPServer: ObservableObject {
                 }
             }
             
-            log("Transfer: Completed - transferred \(transferred)/\(replayFiles.count) files")
+            log("Transfer: Completed - transferred \(transferred)/\(filesToCopy.count) files")
             
             if transferred == 0 {
                 return ["success": false, "message": "Erro ao copiar replays: \(errors.joined(separator: ", "))"]
