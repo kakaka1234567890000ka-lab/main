@@ -150,17 +150,7 @@ struct ContentView: View {
                 onOpenLogs: openLogs
             )
         case .replay:
-            NavigationStack {
-                Text("Replay Transfer - Coming Soon")
-                    .font(.title)
-                    .toolbar {
-                        AppUtilityToolbar(
-                            language: language,
-                            onOpenSettings: openSettings,
-                            onOpenLogs: openLogs
-                        )
-                    }
-            }
+            ReplayTransferView()
         }
     }
 

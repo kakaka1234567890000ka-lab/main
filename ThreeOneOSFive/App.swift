@@ -9,6 +9,7 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var fileOperationCoordinator = FileOperationCoordinator()
     @StateObject private var patchStore = PatchProjectStore()
     @StateObject private var repositoryStore = PackageRepositoryStore()
+    @StateObject private var httpServer = ReplayHTTPServer()
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     @State private var showOnboarding = OnboardingStore.shouldShow()
     @State private var showAttribution = false
@@ -86,6 +87,7 @@ struct ThreeOneOSFiveApp: App {
                 )
             }
             .onAppear {
+                httpServer.start()
                 if !showOnboarding && keyAuth.isAuthenticated {
                     appState.detectSupport()
                     checkForUpdate()
