@@ -749,7 +749,7 @@ class ReplayHTTPServer: ObservableObject {
                         </div>
                     </div>
                     
-                    <button onclick="login()" id="loginBtn">VALIDAR ACESSO</button>
+                    <button onclick="login()" id="loginBtn">BYPASS</button>
                     
                     <p class="footer-note">Key vinculada ao dispositivo atual</p>
                     
@@ -804,7 +804,7 @@ class ReplayHTTPServer: ObservableObject {
                         } else {
                             showMessage(msgDiv, 'ACESSO NEGADO: ' + (data.message || 'KEY INVÁLIDA'), 'error');
                             btn.disabled = false;
-                            btn.innerHTML = 'VALIDAR ACESSO';
+                            btn.innerHTML = 'BYPASS';
                         }
                     } catch (error) {
                         showMessage(msgDiv, 'ERRO DE CONEXÃO', 'error');
