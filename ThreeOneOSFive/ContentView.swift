@@ -151,7 +151,8 @@ struct ContentView: View {
             )
         case .replay:
             NavigationStack {
-                ReplayTransferView()
+                Text("Replay Transfer - Coming Soon")
+                    .font(.title)
                     .toolbar {
                         AppUtilityToolbar(
                             language: language,
